@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>共振 Resonance v1.2.2</title>
+    <title>共振 Resonance v1.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,71 +33,47 @@
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-10px); }
         }
-        #emotion-card, #detail-card {
+        #emotion-card, #detail-card, #my-posts-page {
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
         textarea::placeholder, input::placeholder { color: #9ca3af; }
-        /* Custom scrollbar for comments */
-        .comment-list::-webkit-scrollbar { width: 4px; }
-        .comment-list::-webkit-scrollbar-track { background: transparent; }
-        .comment-list::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.5); border-radius: 2px; }
+        .content-list::-webkit-scrollbar { width: 4px; }
+        .content-list::-webkit-scrollbar-track { background: transparent; }
+        .content-list::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.5); border-radius: 2px; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex flex-col items-center justify-center min-h-screen overflow-hidden p-4 antialiased">
 
-    <!-- Starry background -->
     <div id="star-container" class="absolute top-0 left-0 w-full h-full z-0"></div>
 
-    <!-- Main Content Container -->
     <div id="app-container" class="z-10 w-full max-w-md h-[90vh] flex flex-col">
-
-        <!-- Header with User's Anonymous ID -->
         <header class="text-center p-2">
             <span id="anonymous-id-display" class="text-sm text-gray-400"></span>
         </header>
 
-        <!-- Page Container -->
         <div class="flex-grow relative">
-            <!-- Loading/Message Display -->
-            <div id="message-display" class="absolute inset-0 flex items-center justify-center text-lg text-gray-400 z-50">
-                正在连接星海...
-            </div>
-
-            <!-- Drift Page -->
+            <div id="message-display" class="absolute inset-0 flex items-center justify-center text-lg text-gray-400 z-50">正在连接星海...</div>
+            
             <div id="drift-page" class="hidden w-full h-full flex flex-col items-center justify-center">
                 <div id="emotion-card" class="w-full h-full flex flex-col justify-center p-8 bg-black/20 rounded-2xl shadow-lg cursor-pointer transition-transform duration-300 hover:scale-[1.02]">
                     <p id="emotion-text" class="text-xl md:text-2xl leading-relaxed text-center flex-grow flex items-center justify-center"></p>
-                    <div id="emotion-meta" class="text-center text-gray-400 text-sm mt-4">
-                        <span id="comment-count">评论 0</span>
-                    </div>
+                    <div id="emotion-meta" class="text-center text-gray-400 text-sm mt-4"><span id="comment-count">评论 0</span></div>
                 </div>
-                <div class="mt-6">
-                    <button id="resonate-button" class="bg-indigo-500/50 hover:bg-indigo-500/80 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">
-                        回响
-                    </button>
-                </div>
+                <div class="mt-6"><button id="resonate-button" class="bg-indigo-500/50 hover:bg-indigo-500/80 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">回响</button></div>
             </div>
 
-            <!-- Project Page -->
             <div id="project-page" class="hidden w-full h-full flex flex-col items-center justify-center">
-                <textarea id="emotion-input" class="w-full h-full bg-black/20 rounded-2xl p-8 text-xl md:text-2xl leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all duration-300" placeholder="在此处投射你的情绪、思绪或梦呓..."></textarea>
-                <div class="mt-6">
-                    <button id="project-button" class="bg-teal-500/50 hover:bg-teal-500/80 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">
-                        投入星海
-                    </button>
-                </div>
+                <textarea id="emotion-input" class="w-full h-full bg-black/20 rounded-2xl p-8 text-xl md:text-2xl leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/50" placeholder="在此处投射你的情绪、思绪或梦呓..."></textarea>
+                <div class="mt-6"><button id="project-button" class="bg-teal-500/50 hover:bg-teal-500/80 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg">投入星海</button></div>
             </div>
 
-            <!-- Detail Page (for comments) -->
             <div id="detail-page" class="hidden w-full h-full flex flex-col bg-black/20 rounded-2xl shadow-lg">
                 <div id="detail-card" class="p-6 border-b border-gray-700">
                     <p id="detail-emotion-text" class="text-lg md:text-xl leading-relaxed"></p>
                     <p id="detail-author-id" class="text-right text-sm text-teal-400 mt-2"></p>
                 </div>
-                <div id="comment-list" class="flex-grow p-4 overflow-y-auto comment-list">
-                    <!-- Comments will be injected here -->
-                </div>
+                <div id="comment-list" class="flex-grow p-4 overflow-y-auto content-list"></div>
                 <div class="p-4 border-t border-gray-700 flex gap-2">
                     <input id="comment-input" type="text" class="flex-grow bg-gray-800/50 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" placeholder="留下你的回音...">
                     <button id="post-comment-button" class="bg-indigo-500/70 hover:bg-indigo-500 text-white font-bold p-2 rounded-full transition-colors">
@@ -105,93 +81,81 @@
                     </button>
                 </div>
             </div>
+            
+            <div id="my-posts-page" class="hidden w-full h-full flex flex-col bg-black/20 rounded-2xl shadow-lg">
+                <div class="p-4 border-b border-gray-700 text-center"><h2 class="text-xl">我的星辰 (24小时)</h2></div>
+                <div id="my-posts-list" class="flex-grow p-4 overflow-y-auto content-list"></div>
+            </div>
         </div>
 
-        <!-- Navigation -->
         <nav id="navigation" class="w-full flex justify-center gap-4 py-4 mt-2">
-            <button id="nav-back" class="hidden nav-button p-3 rounded-full bg-gray-700/50">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-            </button>
-            <button id="nav-drift" class="nav-button p-3 rounded-full bg-gray-700/50 data-[active=true]:bg-indigo-500/80 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12a10 10 0 0 0-7.53 16.82A10 10 0 0 1 12 12z"/></svg>
-            </button>
-            <button id="nav-project" class="nav-button p-3 rounded-full bg-gray-700/50 data-[active=true]:bg-teal-500/80 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 5l0 14"/><path d="M19 12l-7 7-7-7"/></svg>
-            </button>
+            <button id="nav-back" class="hidden nav-button p-3 rounded-full bg-gray-700/50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></button>
+            <button id="nav-drift" class="nav-button p-3 rounded-full bg-gray-700/50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12a10 10 0 0 0-7.53 16.82A10 10 0 0 1 12 12z"/></svg></button>
+            <button id="nav-my-posts" class="nav-button p-3 rounded-full bg-gray-700/50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></button>
+            <button id="nav-project" class="nav-button p-3 rounded-full bg-gray-700/50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
         </nav>
     </div>
 
     <script type="module">
-        // Firebase SDK Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, increment, query, where, limit, orderBy, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, increment, query, where, limit, orderBy, serverTimestamp, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- DOM Elements ---
-        const anonymousIdDisplay = document.getElementById('anonymous-id-display');
-        const messageDisplay = document.getElementById('message-display');
-        const driftPage = document.getElementById('drift-page');
-        const projectPage = document.getElementById('project-page');
-        const detailPage = document.getElementById('detail-page');
-        const emotionCard = document.getElementById('emotion-card');
-        const emotionText = document.getElementById('emotion-text');
-        const commentCount = document.getElementById('comment-count');
-        const resonateButton = document.getElementById('resonate-button');
-        const emotionInput = document.getElementById('emotion-input');
-        const projectButton = document.getElementById('project-button');
-        const detailEmotionText = document.getElementById('detail-emotion-text');
-        const detailAuthorId = document.getElementById('detail-author-id');
-        const commentList = document.getElementById('comment-list');
-        const commentInput = document.getElementById('comment-input');
-        const postCommentButton = document.getElementById('post-comment-button');
-        const navDrift = document.getElementById('nav-drift');
-        const navProject = document.getElementById('nav-project');
-        const navBack = document.getElementById('nav-back');
-        const starContainer = document.getElementById('star-container');
+        const DOM = {
+            anonymousIdDisplay: document.getElementById('anonymous-id-display'),
+            messageDisplay: document.getElementById('message-display'),
+            pages: {
+                drift: document.getElementById('drift-page'),
+                project: document.getElementById('project-page'),
+                detail: document.getElementById('detail-page'),
+                myPosts: document.getElementById('my-posts-page')
+            },
+            emotionCard: document.getElementById('emotion-card'),
+            emotionText: document.getElementById('emotion-text'),
+            commentCount: document.getElementById('comment-count'),
+            resonateButton: document.getElementById('resonate-button'),
+            emotionInput: document.getElementById('emotion-input'),
+            projectButton: document.getElementById('project-button'),
+            detailEmotionText: document.getElementById('detail-emotion-text'),
+            detailAuthorId: document.getElementById('detail-author-id'),
+            commentList: document.getElementById('comment-list'),
+            commentInput: document.getElementById('comment-input'),
+            postCommentButton: document.getElementById('post-comment-button'),
+            myPostsList: document.getElementById('my-posts-list'),
+            nav: {
+                back: document.getElementById('nav-back'),
+                drift: document.getElementById('nav-drift'),
+                project: document.getElementById('nav-project'),
+                myPosts: document.getElementById('nav-my-posts')
+            },
+            starContainer: document.getElementById('star-container')
+        };
 
-        // --- Firebase Config ---
-        const firebaseConfig = {
-  apiKey: "AIzaSyDi96c9kJK8p61xDNXGYrZ4iAkOw-cADkc",
-  authDomain: "gongzhen-2025.firebaseapp.com",
-  projectId: "gongzhen-2025",
-  storageBucket: "gongzhen-2025.firebasestorage.app",
-  messagingSenderId: "437765028034",
-  appId: "1:437765028034:web:e84dda67b481d26543e35b",
-  measurementId: "G-H74PG2E7X8"
-};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'resonance-v2';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'resonance-v4';
 
-        // --- App State ---
         let app, auth, db, userId, anonymousId, emotionsCol;
         let currentEmotion = null;
         let unsubscribeComments = null;
+        let countdownInterval = null;
 
-        // --- Anonymous ID Generation ---
         function generateAnonymousId() {
             const adjectives = ["漂流的", "安静的", "发光的", "遥远的", "沉思的", "孤独的", "温暖的"];
             const nouns = ["旅人", "星辰", "回音", "尘埃", "水母", "萤火", "幽灵"];
-            const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
-            const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-            return `${randomAdj}${randomNoun}${Math.floor(Math.random() * 900 + 100)}`;
+            return `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 900 + 100)}`;
         }
 
-        // --- Firebase Initialization ---
         async function initializeFirebase() {
             try {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
-                        anonymousId = sessionStorage.getItem('anonymousId');
-                        if (!anonymousId) {
-                            anonymousId = generateAnonymousId();
-                            sessionStorage.setItem('anonymousId', anonymousId);
-                        }
-                        anonymousIdDisplay.textContent = `你的临时身份: ${anonymousId}`;
-
+                        anonymousId = sessionStorage.getItem('anonymousId') || generateAnonymousId();
+                        sessionStorage.setItem('anonymousId', anonymousId);
+                        DOM.anonymousIdDisplay.textContent = `你的临时身份: ${anonymousId}`;
                         const collectionPath = `artifacts/${appId}/public/data/emotions`;
                         emotionsCol = collection(db, collectionPath);
                         await showDriftPage();
@@ -199,10 +163,7 @@
                         await signIn();
                     }
                 });
-            } catch (error) {
-                console.error("Firebase Init Error:", error);
-                showMessage("无法连接到星海。请刷新重试。");
-            }
+            } catch (error) { console.error("Firebase Init Error:", error); showMessage("无法连接到星海。"); }
         }
 
         async function signIn() {
@@ -212,246 +173,248 @@
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (error) {
-                console.error("Sign-in Error:", error);
-                showMessage("身份验证失败。");
-            }
+            } catch (error) { console.error("Sign-in Error:", error); showMessage("身份验证失败。"); }
         }
 
-        // --- UI Navigation ---
-        function showPage(pageId) {
-            [driftPage, projectPage, detailPage].forEach(p => p.classList.add('hidden'));
-            document.getElementById(pageId).classList.remove('hidden');
-
-            const isDetailPage = pageId === 'detail-page';
-            navBack.classList.toggle('hidden', !isDetailPage);
-            [navDrift, navProject].forEach(b => b.classList.toggle('hidden', isDetailPage));
+        function showPage(pageKey) {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            Object.values(DOM.pages).forEach(p => p.classList.add('hidden'));
+            DOM.pages[pageKey].classList.remove('hidden');
+            
+            const mainPages = ['drift', 'project', 'myPosts'];
+            const isDetailPage = !mainPages.includes(pageKey);
+            
+            DOM.nav.back.classList.toggle('hidden', !isDetailPage);
+            mainPages.forEach(key => DOM.nav[key]?.classList.toggle('hidden', isDetailPage));
+            
+            Object.keys(DOM.nav).forEach(key => {
+                if(DOM.nav[key]) DOM.nav[key].dataset.active = false;
+            });
+            if(DOM.nav[pageKey]) DOM.nav[pageKey].dataset.active = true;
         }
         
         function showMessage(text) {
-            messageDisplay.textContent = text;
-            messageDisplay.classList.remove('hidden');
-            [driftPage, projectPage, detailPage].forEach(p => p.classList.add('hidden'));
+            DOM.messageDisplay.textContent = text;
+            DOM.messageDisplay.classList.remove('hidden');
+            Object.values(DOM.pages).forEach(p => p.classList.add('hidden'));
         }
 
         async function showDriftPage() {
-            showPage('drift-page');
-            navDrift.dataset.active = true;
-            navProject.dataset.active = false;
-            
+            showPage('drift');
             if (unsubscribeComments) unsubscribeComments();
-
-            if (!currentEmotion) {
-                await fetchEmotion();
-            } else {
-                messageDisplay.classList.add('hidden');
-                driftPage.classList.remove('hidden');
+            if (!currentEmotion) await fetchEmotion();
+            else {
+                DOM.messageDisplay.classList.add('hidden');
+                DOM.pages.drift.classList.remove('hidden');
             }
-            driftPage.classList.add('fade-in');
+            DOM.pages.drift.classList.add('fade-in');
         }
 
-        function showProjectPage() {
-            showPage('project-page');
-            navDrift.dataset.active = false;
-            navProject.dataset.active = true;
-            projectPage.classList.add('fade-in');
-        }
+        function showProjectPage() { showPage('project'); DOM.pages.project.classList.add('fade-in'); }
 
-        async function showDetailPage() {
-            if (!currentEmotion) return;
-            showPage('detail-page');
-            detailPage.classList.add('fade-in');
-
-            detailEmotionText.textContent = currentEmotion.text;
-            detailAuthorId.textContent = `—— ${currentEmotion.authorId || '一位匿名的星主'}`;
-            
+        async function showDetailPage(emotionData) {
+            currentEmotion = emotionData;
+            showPage('detail');
+            DOM.pages.detail.classList.add('fade-in');
+            DOM.detailEmotionText.textContent = currentEmotion.text;
+            DOM.detailAuthorId.textContent = `—— ${currentEmotion.authorId || '一位匿名的星主'}`;
             listenForComments();
         }
 
-        // --- Firestore Logic ---
-        async function fetchEmotion() {
-            if (!emotionsCol) { 
-                showMessage("数据库未连接。"); 
-                return; 
-            }
-            showMessage("正在星海中漂流...");
+        function updateAllCountdowns() {
+            const countdownElements = DOM.myPostsList.querySelectorAll('[data-created-at]');
+            const now = Date.now();
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+
+            countdownElements.forEach(el => {
+                const createdAt = parseInt(el.dataset.createdAt, 10);
+                const expiresAt = createdAt + twentyFourHours;
+                const timeLeft = expiresAt - now;
+
+                if (timeLeft <= 0) {
+                    el.textContent = "回响已消散";
+                    el.parentElement.parentElement.style.opacity = '0.5';
+                } else {
+                    const hours = Math.floor((timeLeft / (1000 * 60 * 60)));
+                    const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+                    const seconds = Math.floor((timeLeft / 1000) % 60);
+                    el.textContent = `剩余: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+            });
+        }
+
+        async function showMyPostsPage() {
+            showPage('myPosts');
+            DOM.myPostsList.innerHTML = '<p class="text-center text-gray-400">正在加载你的星辰...</p>';
             
+            const allPosts = JSON.parse(localStorage.getItem('myPosts')) || [];
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            const now = Date.now();
+            const validPosts = allPosts.filter(post => (now - post.createdAt) < twentyFourHours);
+            localStorage.setItem('myPosts', JSON.stringify(validPosts));
+
+            if (validPosts.length === 0) {
+                DOM.myPostsList.innerHTML = '<p class="text-center text-gray-400">你在24小时内还未投射星光...</p>';
+                return;
+            }
+            
+            DOM.myPostsList.innerHTML = '';
+            for (const post of validPosts.reverse()) {
+                const docRef = doc(emotionsCol, post.id);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const postData = { id: docSnap.id, ...docSnap.data() };
+                    const postEl = document.createElement('div');
+                    postEl.className = 'p-4 my-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800/80 transition-opacity';
+                    postEl.innerHTML = `
+                        <p class="truncate">${postData.text}</p>
+                        <div class="flex justify-between items-center mt-2 text-xs">
+                            <span class="text-gray-400">评论: ${postData.commentCount || 0}</span>
+                            <span class="text-amber-400" data-created-at="${post.createdAt}"></span>
+                        </div>
+                    `;
+                    postEl.addEventListener('click', () => showDetailPage(postData));
+                    DOM.myPostsList.appendChild(postEl);
+                }
+            }
+            updateAllCountdowns();
+            countdownInterval = setInterval(updateAllCountdowns, 1000);
+        }
+
+        async function fetchEmotion() {
+            if (!emotionsCol) { showMessage("数据库未连接。"); return; }
+            showMessage("正在星海中漂流...");
             try {
                 const randomId = doc(collection(db, '_')).id;
                 let q = query(emotionsCol, where('__name__', '>=', randomId), orderBy('__name__'), limit(1));
                 let querySnapshot = await getDocs(q);
-
                 if (querySnapshot.empty) {
                     q = query(emotionsCol, orderBy('__name__'), limit(1));
                     querySnapshot = await getDocs(q);
                 }
-                
                 if (!querySnapshot.empty) {
                     const emotionDoc = querySnapshot.docs[0];
                     currentEmotion = { id: emotionDoc.id, ...emotionDoc.data() };
-                    emotionText.textContent = currentEmotion.text;
-                    commentCount.textContent = `评论 ${currentEmotion.commentCount || 0}`;
+                    DOM.emotionText.textContent = currentEmotion.text;
+                    DOM.commentCount.textContent = `评论 ${currentEmotion.commentCount || 0}`;
                 } else {
                     currentEmotion = null;
-                    emotionText.textContent = "星海此刻一片沉寂，不如由你来投射第一束光吧。";
-                    commentCount.textContent = '评论 0';
+                    DOM.emotionText.textContent = "星海此刻一片沉寂，不如由你来投射第一束光吧。";
+                    DOM.commentCount.textContent = '评论 0';
                 }
             } catch (error) {
                 console.error("Error fetching emotion:", error);
                 currentEmotion = null;
-                emotionText.textContent = "在漂流中迷失了方向...请稍后再试。";
-                commentCount.textContent = '';
+                DOM.emotionText.textContent = "在漂流中迷失了方向...";
             } finally {
-                messageDisplay.classList.add('hidden');
-                driftPage.classList.remove('hidden');
+                DOM.messageDisplay.classList.add('hidden');
+                DOM.pages.drift.classList.remove('hidden');
             }
         }
 
         async function projectEmotion() {
-            const text = emotionInput.value.trim();
+            const text = DOM.emotionInput.value.trim();
             if (!text) return;
-            projectButton.disabled = true;
-            projectButton.textContent = "投射中...";
-
+            DOM.projectButton.disabled = true;
+            DOM.projectButton.textContent = "投射中...";
             try {
-                const newDocRef = await addDoc(emotionsCol, {
-                    text: text,
-                    resonanceCount: 0,
-                    commentCount: 0,
-                    createdAt: serverTimestamp(),
-                    authorId: anonymousId
-                });
-                emotionInput.value = "";
-                currentEmotion = { id: newDocRef.id, text, authorId: anonymousId, commentCount: 0 };
-                await showDetailPage();
-            } catch (error) {
-                console.error("Error projecting emotion:", error);
-            } finally {
-                projectButton.disabled = false;
-                projectButton.textContent = "投入星海";
-            }
+                const newDocRef = await addDoc(emotionsCol, { text, resonanceCount: 0, commentCount: 0, createdAt: serverTimestamp(), authorId: anonymousId });
+                DOM.emotionInput.value = "";
+                
+                let myPosts = JSON.parse(localStorage.getItem('myPosts')) || [];
+                myPosts.push({ id: newDocRef.id, createdAt: Date.now() });
+                localStorage.setItem('myPosts', JSON.stringify(myPosts));
+
+                const newEmotion = { id: newDocRef.id, text, authorId: anonymousId, commentCount: 0 };
+                await showDetailPage(newEmotion);
+            } catch (error) { console.error("Error projecting emotion:", error); } 
+            finally { DOM.projectButton.disabled = false; DOM.projectButton.textContent = "投入星海"; }
         }
 
         async function resonateWithEmotion() {
             if (!currentEmotion) return;
-            resonateButton.disabled = true;
+            DOM.resonateButton.disabled = true;
             try {
                 const emotionDocRef = doc(db, emotionsCol.path, currentEmotion.id);
                 await updateDoc(emotionDocRef, { resonanceCount: increment(1) });
-                
-                emotionCard.classList.add('fade-out');
+                DOM.emotionCard.classList.add('fade-out');
                 setTimeout(async () => {
                     currentEmotion = null; 
                     await fetchEmotion(); 
-                    emotionCard.classList.remove('fade-out');
-                    resonateButton.disabled = false;
+                    DOM.emotionCard.classList.remove('fade-out');
+                    DOM.resonateButton.disabled = false;
                 }, 800);
-            } catch (error) {
-                console.error("Error resonating:", error);
-                resonateButton.disabled = false;
-            }
+            } catch (error) { console.error("Error resonating:", error); DOM.resonateButton.disabled = false; }
         }
 
         function listenForComments() {
             if (unsubscribeComments) unsubscribeComments();
             if (!currentEmotion || !currentEmotion.id) return;
-
             const commentsCol = collection(db, emotionsCol.path, currentEmotion.id, 'comments');
             const q = query(commentsCol, orderBy('createdAt', 'asc'));
-
             unsubscribeComments = onSnapshot(q, (snapshot) => {
-                commentList.innerHTML = ''; 
+                DOM.commentList.innerHTML = ''; 
                 if (snapshot.empty) {
-                    commentList.innerHTML = `<p class="text-center text-gray-500 p-4">还没有回音...</p>`;
+                    DOM.commentList.innerHTML = `<p class="text-center text-gray-500 p-4">还没有回音...</p>`;
                 } else {
                     snapshot.forEach(doc => {
-                        // FIX: Add a guard clause to prevent error if currentEmotion becomes null
-                        // due to navigation while the listener is still active.
-                        if (!currentEmotion) {
-                            console.warn("Comment listener fired after navigation. Ignoring.");
-                            return;
-                        }
-
+                        if (!currentEmotion) return;
                         const comment = doc.data();
                         const isAuthor = comment.authorId === currentEmotion.authorId;
                         const commentEl = document.createElement('div');
                         commentEl.className = `p-3 my-2 rounded-lg ${isAuthor ? 'bg-teal-500/10' : 'bg-gray-800/50'}`;
-                        commentEl.innerHTML = `
-                            <p class="text-gray-200">${comment.text}</p>
-                            <p class="text-xs text-right mt-1 ${isAuthor ? 'text-teal-400' : 'text-gray-400'}">${isAuthor ? `${comment.authorId} (星主)` : comment.authorId}</p>
-                        `;
-                        commentList.appendChild(commentEl);
+                        commentEl.innerHTML = `<p>${comment.text}</p><p class="text-xs text-right mt-1 ${isAuthor ? 'text-teal-400' : 'text-gray-400'}">${isAuthor ? `${comment.authorId} (星主)` : comment.authorId}</p>`;
+                        DOM.commentList.appendChild(commentEl);
                     });
-                    commentList.scrollTop = commentList.scrollHeight;
+                    DOM.commentList.scrollTop = DOM.commentList.scrollHeight;
                 }
-            }, (error) => {
-                console.error("Error listening for comments:", error);
-                commentList.innerHTML = `<p class="text-center text-red-500 p-4">无法加载回音</p>`;
-            });
+            }, (error) => { console.error("Error listening for comments:", error); DOM.commentList.innerHTML = `<p class="text-center text-red-500 p-4">无法加载回音</p>`; });
         }
 
         async function postComment() {
-            const text = commentInput.value.trim();
+            const text = DOM.commentInput.value.trim();
             if (!text || !currentEmotion) return;
-            postCommentButton.disabled = true;
-
+            DOM.postCommentButton.disabled = true;
             try {
                 const commentsCol = collection(db, emotionsCol.path, currentEmotion.id, 'comments');
-                await addDoc(commentsCol, {
-                    text: text,
-                    authorId: anonymousId,
-                    createdAt: serverTimestamp()
-                });
-                
+                await addDoc(commentsCol, { text, authorId: anonymousId, createdAt: serverTimestamp() });
                 const emotionDocRef = doc(db, emotionsCol.path, currentEmotion.id);
                 await updateDoc(emotionDocRef, { commentCount: increment(1) });
-
-                commentInput.value = '';
-            } catch (error) {
-                console.error("Error posting comment:", error);
-            } finally {
-                postCommentButton.disabled = false;
-            }
+                DOM.commentInput.value = '';
+            } catch (error) { console.error("Error posting comment:", error); } 
+            finally { DOM.postCommentButton.disabled = false; }
         }
 
-        // --- Event Listeners ---
-        navDrift.addEventListener('click', showDriftPage);
-        navProject.addEventListener('click', showProjectPage);
-        navBack.addEventListener('click', () => {
-            currentEmotion = null; 
-            showDriftPage();
-        });
-        projectButton.addEventListener('click', projectEmotion);
-        resonateButton.addEventListener('click', resonateWithEmotion);
-        emotionCard.addEventListener('click', showDetailPage);
-        postCommentButton.addEventListener('click', postComment);
-        commentInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') postComment();
-        });
-
-        // --- Background Animation ---
         function createStars() {
-            if (starContainer.children.length > 0) return;
-            const count = 50;
-            for (let i = 0; i < count; i++) {
+            if (DOM.starContainer.children.length > 0) return;
+            for (let i = 0; i < 50; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
                 const size = Math.random() * 2 + 1;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.top = `${Math.random() * 100}%`;
-                star.style.left = `${Math.random() * 100}%`;
+                star.style.width = `${size}px`; star.style.height = `${size}px`;
+                star.style.top = `${Math.random() * 100}%`; star.style.left = `${Math.random() * 100}%`;
                 star.style.animationDelay = `${Math.random() * 5}s`;
-                star.style.animationDuration = `${Math.random() * 3 + 4}s`;
-                starContainer.appendChild(star);
+                DOM.starContainer.appendChild(star);
             }
         }
 
-        // --- Initial Load ---
-        window.onload = () => {
-            createStars();
-            initializeFirebase();
-        };
+        DOM.nav.drift.addEventListener('click', showDriftPage);
+        DOM.nav.project.addEventListener('click', showProjectPage);
+        DOM.nav.myPosts.addEventListener('click', showMyPostsPage);
+        DOM.nav.back.addEventListener('click', () => {
+            currentEmotion = null; 
+            showDriftPage();
+        });
+        DOM.projectButton.addEventListener('click', projectEmotion);
+        DOM.resonateButton.addEventListener('click', resonateWithEmotion);
+        DOM.emotionCard.addEventListener('click', () => { if(currentEmotion) showDetailPage(currentEmotion); });
+        DOM.postCommentButton.addEventListener('click', postComment);
+        DOM.commentInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') postComment(); });
+
+        window.onload = () => { createStars(); initializeFirebase(); };
     </script>
 </body>
 </html>
