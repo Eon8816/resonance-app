@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>共振 Resonance v1.7</title>
+    <title>共振 Resonance v1.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -84,11 +84,14 @@
                     <p id="detail-author-id" class="text-right text-sm text-teal-400 mt-2"></p>
                 </div>
                 <div id="comment-list" class="flex-grow p-4 overflow-y-auto content-list"></div>
-                <div class="p-4 border-t border-gray-700 flex gap-2">
-                    <input id="comment-input" type="text" class="flex-grow bg-gray-800/50 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" placeholder="留下你的回音...">
-                    <button id="post-comment-button" class="bg-indigo-500/70 hover:bg-indigo-500 text-white font-bold p-2 rounded-full transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                    </button>
+                <div class="p-4 border-t border-gray-700">
+                    <p id="replying-to-indicator" class="text-xs text-amber-300 mb-2 hidden"></p>
+                    <div class="flex gap-2">
+                        <input id="comment-input" type="text" class="flex-grow bg-gray-800/50 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" placeholder="留下你的回音...">
+                        <button id="post-comment-button" class="bg-indigo-500/70 hover:bg-indigo-500 text-white font-bold p-2 rounded-full transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -141,6 +144,7 @@
             commentList: document.getElementById('comment-list'),
             commentInput: document.getElementById('comment-input'),
             postCommentButton: document.getElementById('post-comment-button'),
+            replyingToIndicator: document.getElementById('replying-to-indicator'),
             myPostsList: document.getElementById('my-posts-list'),
             newNotificationsList: document.getElementById('new-notifications-list'),
             pastNotificationsList: document.getElementById('past-notifications-list'),
@@ -163,13 +167,14 @@
           appId: "1:437765028034:web:e84dda67b481d26543e35b",
           measurementId: "G-H74PG2E7X8"
         };
-        const appId = 'resonance-v7-stable'; // Updated app ID for new version
+        const appId = 'resonance-v8-final';
 
         let app, auth, db, userId, anonymousId, emotionsCol, notificationsCol;
         let currentEmotion = null;
         let unsubscribeComments = null;
         let unsubscribeNotifications = null;
         let countdownInterval = null;
+        let replyingTo = null; // { id, authorId, text }
 
         function generateAnonymousId() {
             const adjectives = ["漂流的", "安静的", "发光的", "遥远的", "沉思的", "孤独的", "温暖的"];
@@ -247,6 +252,8 @@
             DOM.pages.detail.classList.add('fade-in');
             DOM.detailEmotionText.textContent = currentEmotion.text;
             DOM.detailAuthorId.textContent = `—— ${currentEmotion.authorId || '一位匿名的星主'}`;
+            DOM.replyingToIndicator.classList.add('hidden');
+            replyingTo = null;
             listenForComments();
         }
 
@@ -326,10 +333,21 @@
         function renderNotification(notification, listElement) {
             const notificationEl = document.createElement('div');
             notificationEl.className = 'p-3 my-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800/80';
-            notificationEl.innerHTML = `
-                <p class="text-sm">“<span class="text-amber-300">${notification.commenterId || '有位旅人'}</span>” 回响了你的星辰 “<span class="italic text-gray-300">${notification.postSnippet}...</span>”</p>
-                <p class="text-md mt-1 pl-2 border-l-2 border-amber-400">${notification.commentText}</p>
-            `;
+            
+            if (notification.type === 'reply') {
+                 notificationEl.innerHTML = `
+                    <p class="text-sm">“<span class="text-amber-300">${notification.commenterId}</span>” 回复了你的评论:</p>
+                    <p class="text-md mt-1 pl-2 border-l-2 border-amber-400">${notification.commentText}</p>
+                    <p class="text-xs text-gray-400 mt-2 bg-gray-900/50 p-2 rounded">你曾说: ${notification.originalCommentText}</p>
+                `;
+            } else {
+                 notificationEl.innerHTML = `
+                    <p class="text-sm">“<span class="text-amber-300">${notification.commenterId}</span>” 回响了你的星辰:</p>
+                    <p class="text-md mt-1 pl-2 border-l-2 border-amber-400">${notification.commentText}</p>
+                    <p class="text-xs text-gray-400 mt-2">来自星辰: <span class="italic">${notification.postSnippet}...</span></p>
+                `;
+            }
+
             notificationEl.addEventListener('click', async () => {
                 const postRef = doc(emotionsCol, notification.postId);
                 const postSnap = await getDoc(postRef);
@@ -418,11 +436,28 @@
                 } else {
                     snapshot.forEach(doc => {
                         if (!currentEmotion) return;
-                        const comment = doc.data();
+                        const comment = {id: doc.id, ...doc.data()};
                         const isAuthor = comment.authorId === currentEmotion.authorId;
                         const commentEl = document.createElement('div');
                         commentEl.className = `p-3 my-2 rounded-lg ${isAuthor ? 'bg-teal-500/10' : 'bg-gray-800/50'}`;
-                        commentEl.innerHTML = `<p>${comment.text}</p><p class="text-xs text-right mt-1 ${isAuthor ? 'text-teal-400' : 'text-gray-400'}">${isAuthor ? `${comment.authorId} (星主)` : comment.authorId}</p>`;
+                        commentEl.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <p class="flex-grow">${comment.text}</p>
+                                <button class="reply-btn p-1 ml-2 text-gray-400 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18c-4.51 2-5-2-7-2"/><path d="M9 18v-8a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/></svg>
+                                </button>
+                            </div>
+                            <p class="text-xs text-right mt-1 ${isAuthor ? 'text-teal-400' : 'text-gray-400'}">${isAuthor ? `${comment.authorId} (星主)` : comment.authorId}</p>
+                        `;
+                        
+                        commentEl.querySelector('.reply-btn').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            replyingTo = { id: comment.id, authorId: comment.authorId, text: comment.text };
+                            DOM.replyingToIndicator.textContent = `正在回复 ${comment.authorId}: "${comment.text.substring(0, 20)}..."`;
+                            DOM.replyingToIndicator.classList.remove('hidden');
+                            DOM.commentInput.focus();
+                        });
+
                         DOM.commentList.appendChild(commentEl);
                     });
                     DOM.commentList.scrollTop = DOM.commentList.scrollHeight;
@@ -478,17 +513,27 @@
             DOM.postCommentButton.disabled = true;
             try {
                 const batch = writeBatch(db);
-
                 const emotionDocRef = doc(emotionsCol, currentEmotion.id);
                 batch.update(emotionDocRef, { commentCount: increment(1) });
 
                 const commentsCol = collection(emotionDocRef, 'comments');
                 const newCommentRef = doc(commentsCol);
-                batch.set(newCommentRef, { text, authorId: anonymousId, createdAt: serverTimestamp() });
+                const newCommentData = { text, authorId: anonymousId, createdAt: serverTimestamp() };
 
-                if (currentEmotion.authorId && currentEmotion.authorId !== anonymousId) {
+                // Handle replies
+                if (replyingTo) {
+                    newCommentData.parentId = replyingTo.id;
+                }
+                batch.set(newCommentRef, newCommentData);
+                
+                // Handle notifications
+                const shouldNotifyPostAuthor = !replyingTo && currentEmotion.authorId && currentEmotion.authorId !== anonymousId;
+                const shouldNotifyParentCommentAuthor = replyingTo && replyingTo.authorId && replyingTo.authorId !== anonymousId;
+
+                if (shouldNotifyPostAuthor) {
                     const newNotificationRef = doc(notificationsCol);
                     batch.set(newNotificationRef, {
+                        type: 'comment',
                         recipientId: currentEmotion.authorId,
                         commenterId: anonymousId,
                         postId: currentEmotion.id,
@@ -497,10 +542,25 @@
                         delivered: false,
                         createdAt: serverTimestamp()
                     });
+                } else if (shouldNotifyParentCommentAuthor) {
+                    const newNotificationRef = doc(notificationsCol);
+                    batch.set(newNotificationRef, {
+                        type: 'reply',
+                        recipientId: replyingTo.authorId,
+                        commenterId: anonymousId,
+                        postId: currentEmotion.id,
+                        postSnippet: currentEmotion.text.substring(0, 20),
+                        commentText: text,
+                        originalCommentText: replyingTo.text.substring(0, 30),
+                        delivered: false,
+                        createdAt: serverTimestamp()
+                    });
                 }
                 
                 await batch.commit();
                 DOM.commentInput.value = '';
+                replyingTo = null;
+                DOM.replyingToIndicator.classList.add('hidden');
 
             } catch (error) { 
                 console.error("Error posting comment:", error);
