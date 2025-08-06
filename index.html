@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>共振 Resonance v1.4</title>
+    <title>共振 Resonance v1.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,7 +33,7 @@
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-10px); }
         }
-        #emotion-card, #detail-card, #my-posts-page {
+        #emotion-card, #detail-card, #my-echoes-page {
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
@@ -41,6 +41,16 @@
         .content-list::-webkit-scrollbar { width: 4px; }
         .content-list::-webkit-scrollbar-track { background: transparent; }
         .content-list::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.5); border-radius: 2px; }
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            display: none; /* Hidden by default */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex flex-col items-center justify-center min-h-screen overflow-hidden p-4 antialiased">
@@ -82,24 +92,34 @@
                 </div>
             </div>
             
-            <div id="my-posts-page" class="hidden w-full h-full flex flex-col bg-black/20 rounded-2xl shadow-lg">
-                <div class="p-4 border-b border-gray-700 text-center"><h2 class="text-xl">我的星辰 (24小时)</h2></div>
-                <div id="my-posts-list" class="flex-grow p-4 overflow-y-auto content-list"></div>
+            <div id="my-echoes-page" class="hidden w-full h-full flex flex-col bg-black/20 rounded-2xl shadow-lg">
+                <div class="p-4 border-b border-gray-700 text-center"><h2 class="text-xl">我的回响</h2></div>
+                <div id="my-echoes-content" class="flex-grow p-4 overflow-y-auto content-list">
+                    <h3 class="text-lg text-amber-300 mb-2">新消息</h3>
+                    <div id="new-notifications-list"></div>
+                    <h3 class="text-lg text-gray-400 mt-6 mb-2">我的星辰 (回响刷新)</h3>
+                    <div id="my-posts-list"></div>
+                    <h3 class="text-lg text-gray-400 mt-6 mb-2">往日消息</h3>
+                    <div id="past-notifications-list"></div>
+                </div>
             </div>
         </div>
 
         <nav id="navigation" class="w-full flex justify-center gap-4 py-4 mt-2">
             <button id="nav-back" class="hidden nav-button p-3 rounded-full bg-gray-700/50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></button>
             <button id="nav-drift" class="nav-button p-3 rounded-full bg-gray-700/50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12a10 10 0 0 0-7.53 16.82A10 10 0 0 1 12 12z"/></svg></button>
-            <button id="nav-my-posts" class="nav-button p-3 rounded-full bg-gray-700/50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></button>
+            <button id="nav-my-echoes" class="nav-button relative p-3 rounded-full bg-gray-700/50">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                <span id="notification-badge" class="notification-badge"></span>
+            </button>
             <button id="nav-project" class="nav-button p-3 rounded-full bg-gray-700/50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
         </nav>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, increment, query, where, limit, orderBy, serverTimestamp, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, increment, query, where, limit, orderBy, serverTimestamp, onSnapshot, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const DOM = {
             anonymousIdDisplay: document.getElementById('anonymous-id-display'),
@@ -108,7 +128,7 @@
                 drift: document.getElementById('drift-page'),
                 project: document.getElementById('project-page'),
                 detail: document.getElementById('detail-page'),
-                myPosts: document.getElementById('my-posts-page')
+                myEchoes: document.getElementById('my-echoes-page'),
             },
             emotionCard: document.getElementById('emotion-card'),
             emotionText: document.getElementById('emotion-text'),
@@ -122,16 +142,19 @@
             commentInput: document.getElementById('comment-input'),
             postCommentButton: document.getElementById('post-comment-button'),
             myPostsList: document.getElementById('my-posts-list'),
+            newNotificationsList: document.getElementById('new-notifications-list'),
+            pastNotificationsList: document.getElementById('past-notifications-list'),
+            notificationBadge: document.getElementById('notification-badge'),
             nav: {
                 back: document.getElementById('nav-back'),
                 drift: document.getElementById('nav-drift'),
                 project: document.getElementById('nav-project'),
-                myPosts: document.getElementById('nav-my-posts')
+                myEchoes: document.getElementById('nav-my-echoes'),
             },
             starContainer: document.getElementById('star-container')
         };
 
-        const userFirebaseConfig = {
+        const firebaseConfig = {
           apiKey: "AIzaSyDi96c9kJK8p61xDNXGYrZ4iAkOw-cADkc",
           authDomain: "gongzhen-2025.firebaseapp.com",
           projectId: "gongzhen-2025",
@@ -140,12 +163,12 @@
           appId: "1:437765028034:web:e84dda67b481d26543e35b",
           measurementId: "G-H74PG2E7X8"
         };
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userFirebaseConfig;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'resonance-v4';
+        const appId = 'resonance-v6';
 
-        let app, auth, db, userId, anonymousId, emotionsCol;
+        let app, auth, db, userId, anonymousId, emotionsCol, notificationsCol;
         let currentEmotion = null;
         let unsubscribeComments = null;
+        let unsubscribeNotifications = null;
         let countdownInterval = null;
 
         function generateAnonymousId() {
@@ -161,12 +184,14 @@
                 db = getFirestore(app);
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
+                        console.log("Auth state changed: User is authenticated.", user.uid);
                         userId = user.uid;
                         anonymousId = sessionStorage.getItem('anonymousId') || generateAnonymousId();
                         sessionStorage.setItem('anonymousId', anonymousId);
                         DOM.anonymousIdDisplay.textContent = `你的临时身份: ${anonymousId}`;
-                        const collectionPath = `artifacts/${appId}/public/data/emotions`;
-                        emotionsCol = collection(db, collectionPath);
+                        emotionsCol = collection(db, `artifacts/${appId}/public/data/emotions`);
+                        notificationsCol = collection(db, `artifacts/${appId}/public/data/notifications`);
+                        listenForNotifications();
                         await showDriftPage();
                     } else {
                         await signIn();
@@ -177,23 +202,17 @@
 
         async function signIn() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
+                console.log("Signed in anonymously.");
             } catch (error) { console.error("Sign-in Error:", error); showMessage("身份验证失败。"); }
         }
 
         function showPage(pageKey) {
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-                countdownInterval = null;
-            }
+            if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
             Object.values(DOM.pages).forEach(p => p.classList.add('hidden'));
             DOM.pages[pageKey].classList.remove('hidden');
             
-            const mainPages = ['drift', 'project', 'myPosts'];
+            const mainPages = ['drift', 'project', 'myEchoes'];
             const isDetailPage = !mainPages.includes(pageKey);
             
             DOM.nav.back.classList.toggle('hidden', !isDetailPage);
@@ -234,13 +253,11 @@
         }
 
         function updateAllCountdowns() {
-            const countdownElements = DOM.myPostsList.querySelectorAll('[data-created-at]');
+            const countdownElements = DOM.myPostsList.querySelectorAll('[data-expires-at]');
             const now = Date.now();
-            const twentyFourHours = 24 * 60 * 60 * 1000;
 
             countdownElements.forEach(el => {
-                const createdAt = parseInt(el.dataset.createdAt, 10);
-                const expiresAt = createdAt + twentyFourHours;
+                const expiresAt = parseInt(el.dataset.expiresAt, 10);
                 const timeLeft = expiresAt - now;
 
                 if (timeLeft <= 0) {
@@ -255,48 +272,81 @@
             });
         }
 
-        async function showMyPostsPage() {
-            showPage('myPosts');
+        async function showMyEchoesPage() {
+            showPage('myEchoes');
+            DOM.newNotificationsList.innerHTML = '';
+            DOM.pastNotificationsList.innerHTML = '';
             DOM.myPostsList.innerHTML = '<p class="text-center text-gray-400">正在加载你的星辰...</p>';
             
             const allPosts = JSON.parse(localStorage.getItem('myPosts')) || [];
-            const twentyFourHours = 24 * 60 * 60 * 1000;
             const now = Date.now();
-            const validPosts = allPosts.filter(post => (now - post.createdAt) < twentyFourHours);
+            const validPosts = allPosts.filter(post => post.expiresAt > now);
             localStorage.setItem('myPosts', JSON.stringify(validPosts));
 
             if (validPosts.length === 0) {
-                DOM.myPostsList.innerHTML = '<p class="text-center text-gray-400">你在24小时内还未投射星光...</p>';
-                return;
-            }
-            
-            DOM.myPostsList.innerHTML = '';
-            for (const post of validPosts.reverse()) {
-                const docRef = doc(emotionsCol, post.id);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const postData = { id: docSnap.id, ...docSnap.data() };
-                    const postEl = document.createElement('div');
-                    postEl.className = 'p-4 my-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800/80 transition-opacity';
-                    postEl.innerHTML = `
-                        <p class="truncate">${postData.text}</p>
-                        <div class="flex justify-between items-center mt-2 text-xs">
-                            <span class="text-gray-400">评论: ${postData.commentCount || 0}</span>
-                            <span class="text-amber-400" data-created-at="${post.createdAt}"></span>
-                        </div>
-                    `;
-                    postEl.addEventListener('click', () => showDetailPage(postData));
-                    DOM.myPostsList.appendChild(postEl);
+                DOM.myPostsList.innerHTML = '<p class="text-center text-gray-400">24小时内没有需要回响的星辰...</p>';
+            } else {
+                DOM.myPostsList.innerHTML = '';
+                for (const post of validPosts.sort((a, b) => b.expiresAt - a.expiresAt)) {
+                    const docRef = doc(emotionsCol, post.id);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const postData = { id: docSnap.id, ...docSnap.data() };
+                        const postEl = document.createElement('div');
+                        postEl.className = 'p-4 my-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800/80 transition-opacity';
+                        postEl.innerHTML = `
+                            <p class="truncate">${postData.text}</p>
+                            <div class="flex justify-between items-center mt-2 text-xs">
+                                <span class="text-gray-400">评论: ${postData.commentCount || 0}</span>
+                                <span class="text-amber-400" data-expires-at="${post.expiresAt}"></span>
+                            </div>
+                        `;
+                        postEl.addEventListener('click', () => showDetailPage(postData));
+                        DOM.myPostsList.appendChild(postEl);
+                    }
                 }
+                updateAllCountdowns();
+                countdownInterval = setInterval(updateAllCountdowns, 1000);
             }
-            updateAllCountdowns();
-            countdownInterval = setInterval(updateAllCountdowns, 1000);
+
+            const unreadNotifs = JSON.parse(localStorage.getItem('unreadNotifications')) || [];
+            const pastNotifs = JSON.parse(localStorage.getItem('pastNotifications')) || [];
+
+            DOM.newNotificationsList.innerHTML = unreadNotifs.length > 0 ? '' : '<p class="text-gray-500 text-sm">暂无新消息</p>';
+            unreadNotifs.forEach(n => renderNotification(n, DOM.newNotificationsList));
+
+            DOM.pastNotificationsList.innerHTML = pastNotifs.length > 0 ? '' : '<p class="text-gray-500 text-sm">暂无往日消息</p>';
+            pastNotifs.forEach(n => renderNotification(n, DOM.pastNotificationsList));
+
+            if (unreadNotifs.length > 0) {
+                localStorage.setItem('pastNotifications', JSON.stringify([...pastNotifs, ...unreadNotifs]));
+                localStorage.setItem('unreadNotifications', JSON.stringify([]));
+                DOM.notificationBadge.style.display = 'none';
+            }
+        }
+        
+        function renderNotification(notification, listElement) {
+            const notificationEl = document.createElement('div');
+            notificationEl.className = 'p-3 my-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800/80';
+            notificationEl.innerHTML = `
+                <p class="text-sm">“<span class="text-amber-300">${notification.commenterId || '有位旅人'}</span>” 回响了你的星辰 “<span class="italic text-gray-300">${notification.postSnippet}...</span>”</p>
+                <p class="text-md mt-1 pl-2 border-l-2 border-amber-400">${notification.commentText}</p>
+            `;
+            notificationEl.addEventListener('click', async () => {
+                const postRef = doc(emotionsCol, notification.postId);
+                const postSnap = await getDoc(postRef);
+                if(postSnap.exists()) {
+                    showDetailPage({id: postSnap.id, ...postSnap.data()});
+                }
+            });
+            listElement.appendChild(notificationEl);
         }
 
         async function fetchEmotion() {
             if (!emotionsCol) { showMessage("数据库未连接。"); return; }
             showMessage("正在星海中漂流...");
             try {
+                console.log("Attempting to fetch emotion...");
                 const randomId = doc(collection(db, '_')).id;
                 let q = query(emotionsCol, where('__name__', '>=', randomId), orderBy('__name__'), limit(1));
                 let querySnapshot = await getDocs(q);
@@ -334,7 +384,7 @@
                 DOM.emotionInput.value = "";
                 
                 let myPosts = JSON.parse(localStorage.getItem('myPosts')) || [];
-                myPosts.push({ id: newDocRef.id, createdAt: Date.now() });
+                myPosts.push({ id: newDocRef.id, expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
                 localStorage.setItem('myPosts', JSON.stringify(myPosts));
 
                 const newEmotion = { id: newDocRef.id, text, authorId: anonymousId, commentCount: 0 };
@@ -383,15 +433,72 @@
             }, (error) => { console.error("Error listening for comments:", error); DOM.commentList.innerHTML = `<p class="text-center text-red-500 p-4">无法加载回音</p>`; });
         }
 
+        function listenForNotifications() {
+            console.log("Setting up notifications listener for recipient:", anonymousId);
+            const q = query(notificationsCol, where("recipientId", "==", anonymousId));
+            onSnapshot(q, async (snapshot) => {
+                console.log("Notifications snapshot received, size:", snapshot.size);
+                if (snapshot.empty) return;
+
+                const batch = writeBatch(db);
+                let unreadNotifications = JSON.parse(localStorage.getItem('unreadNotifications')) || [];
+                let newNotificationsFound = false;
+
+                snapshot.forEach(doc => {
+                    const notification = { id: doc.id, ...doc.data() };
+                    if (notification.delivered === false) {
+                        newNotificationsFound = true;
+                        unreadNotifications.push(notification);
+                        updateMyPostTimestamp(notification.postId);
+                        const notifRef = doc(notificationsCol, notification.id);
+                        batch.update(notifRef, { delivered: true });
+                    }
+                });
+
+                if (newNotificationsFound) {
+                    await batch.commit();
+                    localStorage.setItem('unreadNotifications', JSON.stringify(unreadNotifications));
+                    DOM.notificationBadge.style.display = 'block';
+                }
+            }, (error) => {
+                console.error("Error in notifications snapshot listener:", error);
+            });
+        }
+
+        function updateMyPostTimestamp(postId) {
+            let myPosts = JSON.parse(localStorage.getItem('myPosts')) || [];
+            const postIndex = myPosts.findIndex(p => p.id === postId);
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            if (postIndex > -1) {
+                myPosts[postIndex].expiresAt = Date.now() + twentyFourHours;
+            } else {
+                myPosts.push({ id: postId, expiresAt: Date.now() + twentyFourHours });
+            }
+            localStorage.setItem('myPosts', JSON.stringify(myPosts));
+        }
+
         async function postComment() {
             const text = DOM.commentInput.value.trim();
             if (!text || !currentEmotion) return;
             DOM.postCommentButton.disabled = true;
             try {
-                const commentsCol = collection(db, emotionsCol.path, currentEmotion.id, 'comments');
-                await addDoc(commentsCol, { text, authorId: anonymousId, createdAt: serverTimestamp() });
                 const emotionDocRef = doc(db, emotionsCol.path, currentEmotion.id);
                 await updateDoc(emotionDocRef, { commentCount: increment(1) });
+                
+                const commentsCol = collection(db, emotionDocRef, 'comments');
+                await addDoc(commentsCol, { text, authorId: anonymousId, createdAt: serverTimestamp() });
+
+                if (currentEmotion.authorId && currentEmotion.authorId !== anonymousId) {
+                    await addDoc(notificationsCol, {
+                        recipientId: currentEmotion.authorId,
+                        commenterId: anonymousId,
+                        postId: currentEmotion.id,
+                        postSnippet: currentEmotion.text.substring(0, 20),
+                        commentText: text,
+                        delivered: false,
+                        createdAt: serverTimestamp()
+                    });
+                }
                 DOM.commentInput.value = '';
             } catch (error) { console.error("Error posting comment:", error); } 
             finally { DOM.postCommentButton.disabled = false; }
@@ -412,7 +519,7 @@
 
         DOM.nav.drift.addEventListener('click', showDriftPage);
         DOM.nav.project.addEventListener('click', showProjectPage);
-        DOM.nav.myPosts.addEventListener('click', showMyPostsPage);
+        DOM.nav.myEchoes.addEventListener('click', showMyEchoesPage);
         DOM.nav.back.addEventListener('click', () => {
             currentEmotion = null; 
             showDriftPage();
