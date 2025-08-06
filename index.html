@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>共振 Resonance v1.8</title>
+    <title>共振 Resonance v1.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,6 +50,9 @@
             border-radius: 50%;
             background-color: #ef4444;
             display: none; /* Hidden by default */
+        }
+        .is-new-notification {
+            background-color: rgba(234, 179, 8, 0.1);
         }
     </style>
 </head>
@@ -98,12 +101,9 @@
             <div id="my-echoes-page" class="hidden w-full h-full flex flex-col bg-black/20 rounded-2xl shadow-lg">
                 <div class="p-4 border-b border-gray-700 text-center"><h2 class="text-xl">我的回响</h2></div>
                 <div id="my-echoes-content" class="flex-grow p-4 overflow-y-auto content-list">
-                    <h3 class="text-lg text-amber-300 mb-2">新消息</h3>
-                    <div id="new-notifications-list"></div>
-                    <h3 class="text-lg text-gray-400 mt-6 mb-2">我的星辰 (回响刷新)</h3>
-                    <div id="my-posts-list"></div>
-                    <h3 class="text-lg text-gray-400 mt-6 mb-2">往日消息</h3>
-                    <div id="past-notifications-list"></div>
+                    <h3 class="text-lg text-amber-300 mb-2">收到的回响</h3>
+                    <div id="notifications-list"></div>
+                    <div id="my-posts-list" class="mt-6 border-t border-gray-700 pt-4"></div>
                 </div>
             </div>
         </div>
@@ -146,8 +146,7 @@
             postCommentButton: document.getElementById('post-comment-button'),
             replyingToIndicator: document.getElementById('replying-to-indicator'),
             myPostsList: document.getElementById('my-posts-list'),
-            newNotificationsList: document.getElementById('new-notifications-list'),
-            pastNotificationsList: document.getElementById('past-notifications-list'),
+            notificationsList: document.getElementById('notifications-list'),
             notificationBadge: document.getElementById('notification-badge'),
             nav: {
                 back: document.getElementById('nav-back'),
@@ -167,14 +166,14 @@
           appId: "1:437765028034:web:e84dda67b481d26543e35b",
           measurementId: "G-H74PG2E7X8"
         };
-        const appId = 'resonance-v8-final';
+        const appId = 'resonance-v9-stable';
 
         let app, auth, db, userId, anonymousId, emotionsCol, notificationsCol;
         let currentEmotion = null;
         let unsubscribeComments = null;
         let unsubscribeNotifications = null;
         let countdownInterval = null;
-        let replyingTo = null; // { id, authorId, text }
+        let replyingTo = null;
 
         function generateAnonymousId() {
             const adjectives = ["漂流的", "安静的", "发光的", "遥远的", "沉思的", "孤独的", "温暖的"];
@@ -279,10 +278,27 @@
 
         async function showMyEchoesPage() {
             showPage('myEchoes');
-            DOM.newNotificationsList.innerHTML = '';
-            DOM.pastNotificationsList.innerHTML = '';
+            DOM.notificationsList.innerHTML = '<p class="text-center text-gray-400">正在加载回响...</p>';
             DOM.myPostsList.innerHTML = '<p class="text-center text-gray-400">正在加载你的星辰...</p>';
             
+            const unreadNotifs = JSON.parse(localStorage.getItem('unreadNotifications')) || [];
+            const pastNotifs = JSON.parse(localStorage.getItem('pastNotifications')) || [];
+            const allNotifs = [...unreadNotifs, ...pastNotifs];
+            
+            allNotifs.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+
+            DOM.notificationsList.innerHTML = allNotifs.length > 0 ? '' : '<p class="text-gray-500 text-sm">暂无回响</p>';
+            allNotifs.forEach(n => {
+                const isNew = unreadNotifs.some(un => un.id === n.id);
+                renderNotification(n, DOM.notificationsList, isNew);
+            });
+
+            if (unreadNotifs.length > 0) {
+                localStorage.setItem('pastNotifications', JSON.stringify(allNotifs));
+                localStorage.setItem('unreadNotifications', JSON.stringify([]));
+                DOM.notificationBadge.style.display = 'none';
+            }
+
             const allPosts = JSON.parse(localStorage.getItem('myPosts')) || [];
             const now = Date.now();
             const validPosts = allPosts.filter(post => post.expiresAt > now);
@@ -313,26 +329,11 @@
                 updateAllCountdowns();
                 countdownInterval = setInterval(updateAllCountdowns, 1000);
             }
-
-            const unreadNotifs = JSON.parse(localStorage.getItem('unreadNotifications')) || [];
-            const pastNotifs = JSON.parse(localStorage.getItem('pastNotifications')) || [];
-
-            DOM.newNotificationsList.innerHTML = unreadNotifs.length > 0 ? '' : '<p class="text-gray-500 text-sm">暂无新消息</p>';
-            unreadNotifs.forEach(n => renderNotification(n, DOM.newNotificationsList));
-
-            DOM.pastNotificationsList.innerHTML = pastNotifs.length > 0 ? '' : '<p class="text-gray-500 text-sm">暂无往日消息</p>';
-            pastNotifs.forEach(n => renderNotification(n, DOM.pastNotificationsList));
-
-            if (unreadNotifs.length > 0) {
-                localStorage.setItem('pastNotifications', JSON.stringify([...pastNotifs, ...unreadNotifs]));
-                localStorage.setItem('unreadNotifications', JSON.stringify([]));
-                DOM.notificationBadge.style.display = 'none';
-            }
         }
         
-        function renderNotification(notification, listElement) {
+        function renderNotification(notification, listElement, isNew) {
             const notificationEl = document.createElement('div');
-            notificationEl.className = 'p-3 my-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800/80';
+            notificationEl.className = `p-3 my-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800/80 ${isNew ? 'is-new-notification' : ''}`;
             
             if (notification.type === 'reply') {
                  notificationEl.innerHTML = `
@@ -520,13 +521,11 @@
                 const newCommentRef = doc(commentsCol);
                 const newCommentData = { text, authorId: anonymousId, createdAt: serverTimestamp() };
 
-                // Handle replies
                 if (replyingTo) {
                     newCommentData.parentId = replyingTo.id;
                 }
                 batch.set(newCommentRef, newCommentData);
                 
-                // Handle notifications
                 const shouldNotifyPostAuthor = !replyingTo && currentEmotion.authorId && currentEmotion.authorId !== anonymousId;
                 const shouldNotifyParentCommentAuthor = replyingTo && replyingTo.authorId && replyingTo.authorId !== anonymousId;
 
