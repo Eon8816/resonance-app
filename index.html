@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>共振 Resonance v1.6</title>
+    <title>共振 Resonance v1.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,7 +163,7 @@
           appId: "1:437765028034:web:e84dda67b481d26543e35b",
           measurementId: "G-H74PG2E7X8"
         };
-        const appId = 'resonance-v6';
+        const appId = 'resonance-v7-stable'; // Updated app ID for new version
 
         let app, auth, db, userId, anonymousId, emotionsCol, notificationsCol;
         let currentEmotion = null;
@@ -184,7 +184,6 @@
                 db = getFirestore(app);
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        console.log("Auth state changed: User is authenticated.", user.uid);
                         userId = user.uid;
                         anonymousId = sessionStorage.getItem('anonymousId') || generateAnonymousId();
                         sessionStorage.setItem('anonymousId', anonymousId);
@@ -203,7 +202,6 @@
         async function signIn() {
             try {
                 await signInAnonymously(auth);
-                console.log("Signed in anonymously.");
             } catch (error) { console.error("Sign-in Error:", error); showMessage("身份验证失败。"); }
         }
 
@@ -346,7 +344,6 @@
             if (!emotionsCol) { showMessage("数据库未连接。"); return; }
             showMessage("正在星海中漂流...");
             try {
-                console.log("Attempting to fetch emotion...");
                 const randomId = doc(collection(db, '_')).id;
                 let q = query(emotionsCol, where('__name__', '>=', randomId), orderBy('__name__'), limit(1));
                 let querySnapshot = await getDocs(q);
@@ -434,10 +431,8 @@
         }
 
         function listenForNotifications() {
-            console.log("Setting up notifications listener for recipient:", anonymousId);
             const q = query(notificationsCol, where("recipientId", "==", anonymousId));
             onSnapshot(q, async (snapshot) => {
-                console.log("Notifications snapshot received, size:", snapshot.size);
                 if (snapshot.empty) return;
 
                 const batch = writeBatch(db);
@@ -482,14 +477,18 @@
             if (!text || !currentEmotion) return;
             DOM.postCommentButton.disabled = true;
             try {
-                const emotionDocRef = doc(db, emotionsCol.path, currentEmotion.id);
-                await updateDoc(emotionDocRef, { commentCount: increment(1) });
-                
-                const commentsCol = collection(db, emotionDocRef, 'comments');
-                await addDoc(commentsCol, { text, authorId: anonymousId, createdAt: serverTimestamp() });
+                const batch = writeBatch(db);
+
+                const emotionDocRef = doc(emotionsCol, currentEmotion.id);
+                batch.update(emotionDocRef, { commentCount: increment(1) });
+
+                const commentsCol = collection(emotionDocRef, 'comments');
+                const newCommentRef = doc(commentsCol);
+                batch.set(newCommentRef, { text, authorId: anonymousId, createdAt: serverTimestamp() });
 
                 if (currentEmotion.authorId && currentEmotion.authorId !== anonymousId) {
-                    await addDoc(notificationsCol, {
+                    const newNotificationRef = doc(notificationsCol);
+                    batch.set(newNotificationRef, {
                         recipientId: currentEmotion.authorId,
                         commenterId: anonymousId,
                         postId: currentEmotion.id,
@@ -499,9 +498,16 @@
                         createdAt: serverTimestamp()
                     });
                 }
+                
+                await batch.commit();
                 DOM.commentInput.value = '';
-            } catch (error) { console.error("Error posting comment:", error); } 
-            finally { DOM.postCommentButton.disabled = false; }
+
+            } catch (error) { 
+                console.error("Error posting comment:", error);
+            } 
+            finally { 
+                DOM.postCommentButton.disabled = false; 
+            }
         }
 
         function createStars() {
