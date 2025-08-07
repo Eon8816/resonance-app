@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>共振 Resonance v1.9</title>
+    <title>共振 Resonance v1.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -166,7 +166,8 @@
           appId: "1:437765028034:web:e84dda67b481d26543e35b",
           measurementId: "G-H74PG2E7X8"
         };
-        const appId = 'resonance-v9-stable';
+        // PERMANENT App ID to ensure data persistence across updates
+        const appId = 'resonance-prod-stable';
 
         let app, auth, db, userId, anonymousId, emotionsCol, notificationsCol;
         let currentEmotion = null;
