@@ -288,11 +288,13 @@
             
             allNotifs.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
 
-            DOM.notificationsList.innerHTML = allNotifs.length > 0 ? '' : '<p class="text-gray-500 text-sm">暂无回响</p>';
-            allNotifs.forEach(n => {
-                const isNew = unreadNotifs.some(un => un.id === n.id);
-                renderNotification(n, DOM.notificationsList, isNew);
-            });
+            DOM.notificationsList.innerHTML = '';
+            if (allNotifs.length > 0) {
+                allNotifs.forEach(n => {
+                    const isNew = unreadNotifs.some(un => un.id === n.id);
+                    renderNotification(n, DOM.notificationsList, isNew);
+                });
+            }
 
             if (unreadNotifs.length > 0) {
                 localStorage.setItem('pastNotifications', JSON.stringify(allNotifs));
